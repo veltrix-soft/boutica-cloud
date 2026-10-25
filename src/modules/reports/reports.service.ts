@@ -1,4 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { and, desc, eq, gte, lte } from 'drizzle-orm';
 import ExcelJS from 'exceljs';
 import puppeteer from 'puppeteer';
@@ -366,9 +370,15 @@ export class ReportsService {
       });
       return Buffer.from(pdfBuffer);
     } catch (err: any) {
-      this.logger.error(`Erreur génération PDF Puppeteer: ${err.message}. Bascule sur buffer HTML.`);
-      return Buffer.from(html, 'utf-8');
-    } finally {
+  this.logger.error(
+    `Erreur génération PDF Puppeteer: ${err.message}`,
+    err.stack,
+  );
+
+  throw new InternalServerErrorException(
+    'Impossible de générer le PDF. Veuillez réessayer plus tard.',
+  );
+}finally {
       if (browser) {
         await browser.close().catch(() => {});
       }
